@@ -165,7 +165,7 @@ const fruits = [
 let balance = 1000, bet = 10, isSpinning = false, state = [[], [], []];
 
 const rand = () => fruits[Math.floor(Math.random() * fruits.length)];
-const render = (el, list) => el.innerHTML = list.map(i => `<div class="symbol"><img src="assets/${i[0]}"></div>`).join('');
+const render = (el, list) => el.innerHTML = list.map(i => `<div class="symbol"><img src="${i[0]}"></div>`).join('');
 
 function init() {
   for (let i = 0; i < 3; i++) {
