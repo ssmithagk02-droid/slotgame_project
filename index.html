@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Fruit Slot</title>
+<style>
+* { 
+  box-sizing: border-box; 
+  margin: 0; font-family: Arial, sans-serif; 
+}
+
+body { 
+  background: #071321; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  min-height: 100vh; 
+}
+.game { 
+  width: 480px; 
+  padding: 20px; 
+  border-radius: 30px; 
+  background: #35bdd8; 
+  border: 6px solid #087f9e; 
+  text-align: center; 
+  color: white; 
+}
+.reels { 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 8px; 
+  background: #159abd; 
+  padding: 10px; 
+  border-radius: 20px; 
+}
+.reel { 
+  height: 300px; 
+  background: white; 
+  border-radius: 12px; 
+  overflow: hidden; 
+  position: relative; 
+}
+.strip { 
+  position: absolute; 
+  width: 100%; 
+  top: 0; 
+  left: 0; 
+}
+
+/* Slot cell sizing */
+.symbol { 
+  height: 100px; 
+  width: 100%; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  border-bottom: 1px dashed #eee; 
+}
+
+/* Slightly reduced image dimensions for cleaner spacing */
+.symbol img { 
+  width: 85px; 
+  height: 85px; 
+  object-fit: contain; 
+  display: block; 
+}
+
+/* Vertical rotation animation */
+.spinning { 
+  animation: spin 0.15s linear infinite; 
+}
+@keyframes spin { 
+  0% { 
+    transform: translateY(0); 
+  } 
+  100% { 
+    transform: translateY(-300px); 
+  } 
+  }
+
+.stats { 
+  margin: 15px 0; 
+  padding: 12px; 
+  background: #111c2d; 
+  border-radius: 15px; 
+  display: flex; 
+  justify-content: space-around; 
+}
+.stats b { 
+  display: block; 
+  margin-top: 4px; 
+}
+#win { 
+  color: #30df88; 
+}
+.bet { 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  gap: 15px; 
+  margin-bottom: 10px; 
+  font-weight: bold; 
+}
+button { 
+  border: 0; 
+  border-radius: 10px; 
+  cursor: pointer; 
+  font-weight: bold; 
+  background: #087f9e; color: white; 
+}
+.bet button { 
+  width: 32px; 
+  height: 32px; 
+  font-size: 18px; 
+}
+#spin { 
+  width: 100%; 
+  height: 50px; 
+  background: #25bd20; 
+  font-size: 22px; 
+}
+#spin:disabled { 
+  background: #888; 
+  cursor: not-allowed; 
+}
+#msg { 
+  color: #ffd52f; 
+  font-weight: bold; 
+  height: 24px; 
+  }
+</style>
+</head>
+<body>
+
+<div class="game">
+  <h1>🍊 FRUIT SLOT 🍉</h1>
+  <div class="reels">
+    <div class="reel"><div class="strip" id="r0"></div></div>
+    <div class="reel"><div class="strip" id="r1"></div></div>
+    <div class="reel"><div class="strip" id="r2"></div></div>
+  </div>
+
+  <div class="stats">
+    <div>BALANCE<b id="bal">$1000</b></div>
+    <div>WIN<b id="win">$0</b></div>
+    <div>BET<b id="bet">$10</b></div>
+  </div>
+
+  <div class="bet">
+    <button onclick="changeBet(-5)">−</button><span>BET</span><button onclick="changeBet(5)">+</button>
+  </div>
+  <div id="msg">SET BET & SPIN!</div>
+  <button id="spin" onclick="spin()">SPIN</button>
+</div>
+
+<script>
+const fruits = [
+  ["orange.png", 10], 
+  ["cherries.png", 15], 
+  ["seven.png", 10],
+  ["watermelon.png", 15], 
+  ["lemon.png", 10], 
+  ["eggplant.png", 10]
+];
+
+let balance = 1000, bet = 10, isSpinning = false, state = [[], [], []];
+
+const rand = () => fruits[Math.floor(Math.random() * fruits.length)];
+const render = (el, list) => el.innerHTML = list.map(i => `<div class="symbol"><img src="assets/${i[0]}"></div>`).join('');
+
+function init() {
+  for (let i = 0; i < 3; i++) {
+    state[i] = [rand(), rand(), rand()];
+    render(document.getElementById(`r${i}`), state[i]);
+  }
+}
+
+function spin() {
+  if (isSpinning) return;
+  if (balance < bet) return document.getElementById("msg").innerText = "NOT ENOUGH BALANCE";
+
+  isSpinning = true;
+  document.getElementById("spin").disabled = true;
+  balance -= bet;
+  document.getElementById("bal").innerText = "$" + balance;
+  document.getElementById("win").innerText = "$0";
+  document.getElementById("msg").innerText = "SPINNING...";
+
+  [0, 1, 2].forEach(i => {
+    let r = document.getElementById(`r${i}`);
+    
+    let stripData = [rand(), rand(), rand(), rand(), rand(), rand()];
+    state[i] = stripData.slice(0, 3);
+    render(r, stripData);
+    r.classList.add("spinning");
+
+    setTimeout(() => {
+      r.classList.remove("spinning");
+      render(r, state[i]);
+      if (i === 2) checkWin();
+    }, 1000 + i * 300);
+  });
+}
+
+function checkWin() {
+  let prize = 0;
+  for (let row = 0; row < 3; row++) {
+    if (state[0][row][0] === state[1][row][0] && state[1][row][0] === state[2][row][0]) {
+      prize += bet * state[0][row][1];
+    }
+  }
+
+  balance += prize;
+  document.getElementById("win").innerText = "$" + prize;
+  document.getElementById("bal").innerText = "$" + balance;
+  document.getElementById("msg").innerText = prize > 0 ? "🎉 YOU WIN!" : "TRY AGAIN!";
+  isSpinning = false;
+  document.getElementById("spin").disabled = false;
+}
+
+function changeBet(n) {
+  if (isSpinning) return;
+  bet = Math.max(5, Math.min(100, bet + n));
+  document.getElementById("bet").innerText = "$" + bet;
+}
+
+init();
+</script>
+
+</body>
+</html>
